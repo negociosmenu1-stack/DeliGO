@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Panel Admin - NortFood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-principal: #38b087;
+            --bg-body: #f0f2f5;
+            --texto-oscuro: #2c3e50;
+            --texto-suave: #7f8c8d;
+            --sombra-suave: 0 2px 10px rgba(0,0,0,0.05);
+            --sombra-media: 0 4px 15px rgba(0,0,0,0.08);
+            --radio: 14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--texto-oscuro);
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        /* --- FLASH MESSAGES --- */
+        .flash-container {
+            max-width: 800px;
+            margin: 0 auto 15px auto;
+        }
+
+        .flash-msg {
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideDown 0.3s ease;
+        }
+
+        .flash-msg.success { background: #e8f5e9; color: #27ae60; border: 1px solid #c8e6c9; }
+        .flash-msg.error { background: #fdeaea; color: #e74c3c; border: 1px solid #f5c6cb; }
+        .flash-msg.warning { background: #fff8e1; color: #f39c12; border: 1px solid #ffe082; }
+
+        .flash-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.6;
+            padding: 0 4px;
+        }
+        .flash-close:hover { opacity: 1; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- HEADER --- */
+        .header-admin {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+        }
+
+        .header-admin h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--color-principal);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-admin h1 svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            background: white;
+            border: 1.5px solid #e74c3c;
+            color: #e74c3c;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        /* --- STATS --- */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radio);
+            padding: 14px 12px;
+            text-align: center;
+            box-shadow: var(--sombra-suave);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--color-principal);
+            line-height: 1;
+        }
+
+        .stat-number.danger { color: #e74c3c; }
+        .stat-number.warning { color: #f39c12; }
+        .stat-number.muted { color: #95a5a6; }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--texto-suave);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* --- TABS --- */
+        .tabs-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tabs-nav {
+            display: flex;
+            gap: 0;
+            background: white;
+            border-radius: var(--radio) var(--radio) 0 0;
+            overflow: hidden;
+            box-shadow: var(--sombra-suave);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 10px;
+            border: none;
+            background: white;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--texto-suave);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+            color: var(--texto-oscuro);
+        }
+
+        .tab-btn.activo {
+            color: var(--color-principal);
+            background: white;
+        }
+
+        .tab-btn.activo::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            right: 15%;
+            height: 3px;
+            background: var(--color-principal);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-badge {
+            background: var(--color-principal);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .tab-badge.danger {
+            background: #e74c3c;
+        }
+
+        .tab-badge.warning {
+            background: #f39c12;
+        }
+
+        /* --- TAB CONTENT --- */
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 0 0 var(--radio) var(--radio);
+            padding: 20px;
+            box-shadow: var(--sombra-suave);
+        }
+
+        .tab-content.activo {
+            display: block;
+        }
+
+        /* --- NEGOCIO CARD --- */
+        .negocios-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .negocio-card {
+            background: white;
+            border-radius: var(--radio);
+            padding: 16px;
+            border: 1.5px solid #eef0f2;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .negocio-card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--sombra-media);
+        }
+
+        .negocio-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .negocio-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .negocio-nombre {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--texto-oscuro);
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .negocio-detalles {
+            font-size: 12px;
+            color: var(--texto-suave);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+        }
+
+        .negocio-rubro {
+            display: inline-block;
+            background: #e8f5e9;
+            color: var(--color-principal);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* --- STATUS BADGES --- */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .status-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-activo { background: #e8f5e9; color: #27ae60; }
+        .status-activo .dot { background: #27ae60; animation: pulse 2s infinite; }
+
+        .status-por_vencer { background: #fff8e1; color: #f39c12; }
+        .status-por_vencer .dot { background: #f39c12; animation: pulse 1.5s infinite; }
+
+        .status-vencido { background: #fdeaea; color: #e74c3c; }
+        .status-vencido .dot { background: #e74c3c; }
+
+        .status-suspendido { background: #f3e5f5; color: #9b59b6; }
+        .status-suspendido .dot { background: #9b59b6; }
+
+        .status-sin_plan { background: #eceff1; color: #95a5a6; }
+        .status-sin_plan .dot { background: #95a5a6; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* --- PLAN INFO --- */
+        .plan-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            font-size: 12px;
+            color: var(--texto-suave);
+            margin: 8px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .plan-info-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .plan-info-item strong {
+            color: var(--texto-oscuro);
+        }
+
+        .plan-info-item.vencimiento-urgente strong {
+            color: #e74c3c;
+        }
+
+        .plan-info-item.vencimiento-proximo strong {
+            color: #f39c12;
+        }
+
+        /* --- ACCIONES --- */
+        .negocio-acciones {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn-action {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .btn-renovar {
+            background: var(--color-principal);
+            color: white;
+        }
+
+        .btn-suspender {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-reactivar {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-eliminar-admin {
+            background: white;
+            color: #e74c3c;
+            border: 1.5px solid #e74c3c;
+        }
+
+        .btn-eliminar-admin:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-aprobar {
+            background: var(--color-principal);
+            color: white;
+        }
+
+        .btn-rechazar {
+            background: white;
+            color: #e74c3c;
+            border: 1.5px solid #e74c3c;
+        }
+
+        .btn-rechazar:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-ver {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        /* --- VACIO --- */
+        .vacio {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .vacio svg {
+            width: 50px;
+            height: 50px;
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-bottom: 15px;
+        }
+
+        .vacio h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--texto-oscuro);
+            margin-bottom: 6px;
+        }
+
+        .vacio p {
+            font-size: 14px;
+            color: var(--texto-suave);
+        }
+
+        /* --- MODAL RENOVAR --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.activo {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            width: 95%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: modalIn 0.25s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-box h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: var(--texto-oscuro);
+        }
+
+        .modal-box .modal-sub {
+            font-size: 13px;
+            color: var(--texto-suave);
+            margin-bottom: 18px;
+        }
+
+        .modal-field {
+            margin-bottom: 14px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--texto-suave);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-field input,
+        .modal-field select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .modal-field input:focus,
+        .modal-field select:focus {
+            border-color: var(--color-principal);
+            box-shadow: 0 0 0 3px rgba(56,176,135,0.15);
+        }
+
+        .periodo-quick {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .periodo-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            font-family: 'Nunito', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            color: var(--texto-oscuro);
+        }
+
+        .periodo-btn:hover {
+            border-color: var(--color-principal);
+            background: #e8f5e9;
+        }
+
+        .periodo-btn.seleccionado {
+            border-color: var(--color-principal);
+            background: var(--color-principal);
+            color: white;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .modal-actions button,
+        .modal-actions a {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.15s ease;
+        }
+
+        .btn-modal-confirm {
+            background: var(--color-principal);
+            color: white;
+        }
+
+        .btn-modal-cancel {
+            background: #f0f2f5;
+            color: var(--texto-oscuro);
+        }
+
+        .btn-modal-cancel:hover {
+            background: #e0e2e5;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 600px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .tab-btn {
+                font-size: 12px;
+                padding: 12px 6px;
+            }
+            .negocio-card-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* --- DEUDA TARIFA --- */
+        .deuda-info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .deuda-info-row.deuda-bloqueado {
+            background: #fff5f5;
+            border-color: #f5c6cb;
+        }
+        .deuda-info-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .deuda-info-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #888;
+        }
+        .deuda-info-monto {
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .deuda-info-monto.green { color: #27ae60; }
+        .deuda-info-monto.orange { color: #FB8C00; }
+        .deuda-info-monto.red { color: #e74c3c; }
+        .deuda-badge-bloqueado {
+            background: #ffebee;
+            color: #e74c3c;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .btn-abonar {
+            background: #e8f5e9;
+            color: #27ae60;
+            border: 1.5px solid #27ae60;
+            white-space: nowrap;
+        }
+        .btn-abonar:hover {
+            background: #27ae60;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .btn-abonar.disabled {
+            background: #f5f5f5;
+            color: #ccc;
+            border-color: #e0e0e0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .btn-abonar.disabled:hover {
+            transform: none;
+            box-shadow: none;
+            background: #f5f5f5;
+            color: #ccc;
+        }
+        .deuda-info-limite {
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+        }
+        .deuda-info-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .limite-form {
+            background: #fff;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            padding: 2px 6px;
+        }
+        .limite-form:focus-within {
+            border-color: #2196F3;
+            box-shadow: 0 0 0 2px rgba(33,150,243,0.15);
+        }
+        .limite-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #888;
+            white-space: nowrap;
+        }
+        .limite-input {
+            width: 75px;
+            padding: 3px 5px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: right;
+            color: #333;
+            background: #fafafa;
+        }
+        .limite-input:focus {
+            outline: none;
+            border-color: #2196F3;
+            background: #fff;
+        }
+        .btn-limite {
+            background: #e3f2fd;
+            color: #1976D2;
+            border: 1.5px solid #1976D2;
+            padding: 3px 8px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .btn-limite:hover {
+            background: #1976D2;
+            color: white;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <!-- FLASH MESSAGES -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-msg {{ category }}">
+                {{ message }}
+                <button class="flash-close" onclick="this.parentElement.style.display='none'">&times;</button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- HEADER -->
+    <div class="header-admin">
+        <h1>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Panel Admin
+        </h1>
+        <a href="/logout" class="btn-logout">Cerrar sesion</a>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number muted">{{ negocios|length }}</div>
+            <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ count_activos }}</div>
+            <div class="stat-label">Activos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number warning">{{ count_alertas }}</div>
+            <div class="stat-label">Alerta</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number {{ 'danger' if deuda_total_plataforma > 0 else 'muted' }}">${{ "{:,.0f}".format(deuda_total_plataforma) }}</div>
+            <div class="stat-label">Deuda Total</div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-container">
+        <div class="tabs-nav">
+            <button class="tab-btn activo" onclick="switchTab('pendientes')" id="tab-pendientes">
+                Pendientes
+                {% if negocios|length > 0 %}<span class="tab-badge">{{ negocios|length }}</span>{% endif %}
+            </button>
+            <button class="tab-btn" onclick="switchTab('activos')" id="tab-activos">
+                Activos
+                {% if count_activos > 0 %}<span class="tab-badge">{{ count_activos }}{% endif %}
+            </button>
+            <button class="tab-btn" onclick="switchTab('alertas')" id="tab-alertas">
+                Con Alerta
+                {% if count_alertas > 0 %}<span class="tab-badge danger">{{ count_alertas }}</span>{% endif %}
+            </button>
+        </div>
+
+        <!-- TAB: PENDIENTES -->
+        <div class="tab-content activo" id="content-pendientes">
+            {% if negocios|length > 0 %}
+            <div class="negocios-lista">
+                {% for neg in negocios %}
+                <div class="negocio-card">
+                    <div class="negocio-card-top">
+                        <div class="negocio-info">
+                            <div class="negocio-nombre">{{ neg.nombre }}</div>
+                            <div class="negocio-detalles">
+                                <span>Usuario: {{ neg.usuario }}</span>
+                                <span>Slug: {{ neg.slug }}</span>
+                            </div>
+                            <span class="negocio-rubro">{{ neg.rubro|capitalize }}</span>
+                        </div>
+                    </div>
+                    <div class="negocio-acciones">
+                        <a href="/aprobar/{{ neg._id }}" class="btn-action btn-aprobar">Aprobar</a>
+                        <form action="/rechazar/{{ neg._id }}" method="POST" style="display:inline;" onsubmit="return confirm('Seguro quieres rechazar y eliminar este negocio?')">
+                            <button type="submit" class="btn-action btn-rechazar">Rechazar</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vacio">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <h3>Todo al dia</h3>
+                <p>No hay negocios pendientes de aprobacion.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- TAB: ACTIVOS -->
+        <div class="tab-content" id="content-activos">
+            {% if activos_ok|length > 0 %}
+            <div class="negocios-lista">
+                {% for neg in activos_ok %}
+                <div class="negocio-card" data-estado="{{ neg.estado_suscripcion }}">
+                    <div class="negocio-card-top">
+                        <div class="negocio-info">
+                            <div class="negocio-nombre">
+                                {{ neg.nombre }}
+                                <span class="status-badge status-{{ neg.estado_suscripcion }}">
+                                    <span class="dot"></span>
+                                    {% if neg.estado_suscripcion == 'activo' %}Activo
+                                    {% elif neg.estado_suscripcion == 'sin_plan' %}Sin plan{% endif %}
+                                </span>
+                            </div>
+                            <div class="negocio-detalles">
+                                <span>Usuario: {{ neg.usuario }}</span>
+                                <span>Slug: {{ neg.slug }}</span>
+                                <span>{{ neg.cantidad_productos }} productos</span>
+                            </div>
+                            <span class="negocio-rubro">{{ neg.rubro|capitalize }}</span>
+                        </div>
+                    </div>
+
+                    <!-- PLAN INFO -->
+                    <div class="plan-info">
+                        <div class="plan-info-item">
+                            Plan: <strong>{{ neg.get('plan_tipo', 'Sin asignar')|capitalize }}</strong>
+                        </div>
+                        {% if neg.get('plan_vencimiento') %}
+                        <div class="plan-info-item">
+                            Vence: <strong>{{ neg.plan_vencimiento }}</strong>
+                            {% if neg.get('dias_restantes') is not none %}
+                                <span style="color:#27ae60;font-weight:800;">({{ neg.dias_restantes }} dias)</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if neg.get('plan_fecha_renovacion') %}
+                        <div class="plan-info-item">
+                            Ultima renovacion: <strong>{{ neg.plan_fecha_renovacion }}</strong>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- DEUDA TARIFA -->
+                    {% if neg.get('pedidos_entregados', 0) > 0 %}
+                    <div class="deuda-info-row {{ 'deuda-bloqueado' if neg.get('deuda_alcanzada') }}">
+                        <div class="deuda-info-left">
+                            <span class="deuda-info-label">Deuda tarifa:</span>
+                            <span class="deuda-info-monto {{ 'red' if neg.get('deuda_alcanzada') else 'orange' if neg.deuda_tarifa > 0 else 'green' }}">
+                                ${{ "{:,.0f}".format(neg.deuda_tarifa) }}
+                            </span>
+                            <span class="deuda-info-limite">/ ${{ "{:,.0f}".format(neg.limite_deuda) }}</span>
+                            {% if neg.get('deuda_alcanzada') %}
+                            <span class="deuda-badge-bloqueado">🚫 OCULTO</span>
+                            {% endif %}
+                        </div>
+                        <div class="deuda-info-actions">
+                            <form action="/superadmin/abonar-deuda/{{ neg._id }}" method="POST" style="display:inline;"
+                                  onsubmit="return confirm('Confirmar que {{ neg.nombre|e }} abonó su deuda de ${{ neg.deuda_tarifa|int }}?')">
+                                <button type="submit" class="btn-action btn-abonar {{ 'disabled' if neg.deuda_tarifa <= 0 }}"
+                                        {{ 'disabled' if neg.deuda_tarifa <= 0 }}>
+                                    💰 Abono deuda
+                                </button>
+                            </form>
+                            <form action="/superadmin/actualizar-limite-deuda/{{ neg._id }}" method="POST" class="limite-form" style="display:inline-flex; align-items:center; gap:4px;"
+                                  onsubmit="return confirm('Cambiar límite de deuda de {{ neg.nombre|e }} a $' + this.querySelector('input').value + '?')">
+                                <span class="limite-label">Límite: $</span>
+                                <input type="number" name="limite_deuda" value="{{ neg.limite_deuda }}" min="{{ limite_minimo }}" step="1000"
+                                       class="limite-input" title="Límite personalizado (mínimo ${{ '{:,.0f}'.format(limite_minimo) }})">
+                                <button type="submit" class="btn-action btn-limite" title="Guardar límite">✔</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="negocio-acciones">
+                        <button class="btn-action btn-renovar" onclick="abrirModalRenovar(this)" data-id="{{ neg._id }}" data-nombre="{{ neg.nombre|e }}" data-vencimiento="{{ neg.get('plan_vencimiento', '') }}" data-plan="{{ neg.get('plan_tipo', 'mensual') }}">
+                            Renovar Plan
+                        </button>
+                        <form action="/superadmin/suspender/{{ neg._id }}" method="POST" style="display:inline;" onsubmit="return confirm('Suspender este negocio? Su catalogo no sera visible.')">
+                            <button type="submit" class="btn-action btn-suspender">Suspender</button>
+                        </form>
+                        <a href="/{{ neg.slug }}" target="_blank" class="btn-action btn-ver">Ver Catalogo</a>
+                        <form action="/superadmin/eliminar-activo/{{ neg._id }}" method="POST" style="display:inline;" onsubmit="return confirm('ATENCION: Esto eliminara el negocio y todos sus productos permanentemente. Estas seguro?')">
+                            <button type="submit" class="btn-action btn-eliminar-admin">Eliminar</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vacio">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <h3>Sin negocios activos</h3>
+                <p>Aun no hay negocios aprobados en la plataforma.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- TAB: CON ALERTA -->
+        <div class="tab-content" id="content-alertas">
+            {% if alertas|length > 0 %}
+            <div class="negocios-lista">
+                {% for neg in alertas %}
+                <div class="negocio-card" data-estado="{{ neg.estado_suscripcion }}">
+                    <div class="negocio-card-top">
+                        <div class="negocio-info">
+                            <div class="negocio-nombre">
+                                {{ neg.nombre }}
+                                <span class="status-badge status-{{ neg.estado_suscripcion }}">
+                                    <span class="dot"></span>
+                                    {% if neg.estado_suscripcion == 'por_vencer' %}Por vencer
+                                    {% elif neg.estado_suscripcion == 'vencido' %}Vencido
+                                    {% elif neg.estado_suscripcion == 'suspendido' %}Suspendido{% endif %}
+                                </span>
+                            </div>
+                            <div class="negocio-detalles">
+                                <span>Usuario: {{ neg.usuario }}</span>
+                                <span>{{ neg.cantidad_productos }} productos</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plan-info">
+                        <div class="plan-info-item">
+                            Plan: <strong>{{ neg.get('plan_tipo', 'Sin asignar')|capitalize }}</strong>
+                        </div>
+                        {% if neg.get('plan_vencimiento') %}
+                        <div class="plan-info-item {% if neg.estado_suscripcion == 'vencido' %}vencimiento-urgente{% elif neg.estado_suscripcion == 'por_vencer' %}vencimiento-proximo{% endif %}">
+                            Vence: <strong>{{ neg.plan_vencimiento }}</strong>
+                            {% if neg.get('dias_restantes') is not none %}
+                                {% if neg.dias_restantes < 0 %}
+                                    <span style="color:#e74c3c;font-weight:800;">({{ neg.dias_restantes }} dias)</span>
+                                {% else %}
+                                    <span style="color:#f39c12;font-weight:800;">({{ neg.dias_restantes }} dias)</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <!-- DEUDA TARIFA -->
+                    {% if neg.get('pedidos_entregados', 0) > 0 %}
+                    <div class="deuda-info-row {{ 'deuda-bloqueado' if neg.get('deuda_alcanzada') }}">
+                        <div class="deuda-info-left">
+                            <span class="deuda-info-label">Deuda tarifa:</span>
+                            <span class="deuda-info-monto {{ 'red' if neg.get('deuda_alcanzada') else 'orange' if neg.deuda_tarifa > 0 else 'green' }}">
+                                ${{ "{:,.0f}".format(neg.deuda_tarifa) }}
+                            </span>
+                            <span class="deuda-info-limite">/ ${{ "{:,.0f}".format(neg.limite_deuda) }}</span>
+                            {% if neg.get('deuda_alcanzada') %}
+                            <span class="deuda-badge-bloqueado">🚫 OCULTO</span>
+                            {% endif %}
+                        </div>
+                        <div class="deuda-info-actions">
+                            <form action="/superadmin/abonar-deuda/{{ neg._id }}" method="POST" style="display:inline;"
+                                  onsubmit="return confirm('Confirmar que {{ neg.nombre|e }} abonó su deuda de ${{ neg.deuda_tarifa|int }}?')">
+                                <button type="submit" class="btn-action btn-abonar {{ 'disabled' if neg.deuda_tarifa <= 0 }}"
+                                        {{ 'disabled' if neg.deuda_tarifa <= 0 }}>
+                                    💰 Abono deuda
+                                </button>
+                            </form>
+                            <form action="/superadmin/actualizar-limite-deuda/{{ neg._id }}" method="POST" class="limite-form" style="display:inline-flex; align-items:center; gap:4px;"
+                                  onsubmit="return confirm('Cambiar límite de deuda de {{ neg.nombre|e }} a $' + this.querySelector('input').value + '?')">
+                                <span class="limite-label">Límite: $</span>
+                                <input type="number" name="limite_deuda" value="{{ neg.limite_deuda }}" min="{{ limite_minimo }}" step="1000"
+                                       class="limite-input" title="Límite personalizado (mínimo ${{ '{:,.0f}'.format(limite_minimo) }})">
+                                <button type="submit" class="btn-action btn-limite" title="Guardar límite">✔</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="negocio-acciones">
+                        <button class="btn-action btn-renovar" onclick="abrirModalRenovar(this)" data-id="{{ neg._id }}" data-nombre="{{ neg.nombre|e }}" data-vencimiento="{{ neg.get('plan_vencimiento', '') }}" data-plan="{{ neg.get('plan_tipo', 'mensual') }}">
+                            Renovar Plan
+                        </button>
+                        {% if neg.estado_suscripcion == 'suspendido' %}
+                        <form action="/superadmin/reactivar/{{ neg._id }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-action btn-reactivar">Reactivar</button>
+                        </form>
+                        {% else %}
+                        <form action="/superadmin/suspender/{{ neg._id }}" method="POST" style="display:inline;" onsubmit="return confirm('Suspender este negocio?')">
+                            <button type="submit" class="btn-action btn-suspender">Suspender</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="vacio">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <h3>Todo bien!</h3>
+                <p>No hay negocios con alertas de suscripcion.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MODAL RENOVAR -->
+    <div class="modal-overlay" id="modal-renovar">
+        <div class="modal-box">
+            <h3>Renovar Plan</h3>
+            <p class="modal-sub" id="modal-renovar-nombre"></p>
+
+            <form action="" method="POST" id="form-renovar" onsubmit="return confirmarRenovacion()">
+                <input type="hidden" name="plan_tipo" id="renovar-plan-tipo" value="mensual">
+
+                <!-- Periodos rapidos -->
+                <div class="modal-field">
+                    <label>Periodo rapido</label>
+                    <div class="periodo-quick">
+                        <button type="button" class="periodo-btn" onclick="seleccionarPeriodo(15, this)">15 dias</button>
+                        <button type="button" class="periodo-btn seleccionado" onclick="seleccionarPeriodo(30, this)">30 dias</button>
+                        <button type="button" class="periodo-btn" onclick="seleccionarPeriodo(90, this)">90 dias</button>
+                        <button type="button" class="periodo-btn" onclick="seleccionarPeriodo(365, this)">1 ano</button>
+                    </div>
+                </div>
+
+                <!-- O fecha personalizada -->
+                <div class="modal-field">
+                    <label>O fecha de vencimiento personalizada</label>
+                    <input type="date" name="fecha_vencimiento" id="renovar-fecha" onchange="deseleccionarPeriodos()">
+                </div>
+
+                <!-- Tipo de plan -->
+                <div class="modal-field">
+                    <label>Tipo de plan</label>
+                    <select name="plan_tipo_select" id="renovar-tipo-select" onchange="document.getElementById('renovar-plan-tipo').value = this.value">
+                        <option value="prueba">Prueba (Gratis)</option>
+                        <option value="mensual" selected>Mensual</option>
+                        <option value="trimestral">Trimestral</option>
+                        <option value="semestral">Semestral</option>
+                        <option value="anual">Anual</option>
+                        <option value="vitalicio">Vitalicio</option>
+                    </select>
+                </div>
+
+                <input type="hidden" name="periodo" id="renovar-periodo" value="30">
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="cerrarModalRenovar()">Cancelar</button>
+                    <button type="submit" class="btn-modal-confirm">Confirmar Renovacion</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- TABS ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('activo'));
+            document.getElementById('tab-' + tab).classList.add('activo');
+            document.getElementById('content-' + tab).classList.add('activo');
+        }
+
+        // --- MODAL RENOVAR (usando data attributes en vez de onclick inline) ---
+        function abrirModalRenovar(btn) {
+            const id = btn.dataset.id;
+            const nombre = btn.dataset.nombre;
+            const vencimientoActual = btn.dataset.vencimiento;
+            const planTipo = btn.dataset.plan;
+
+            document.getElementById('modal-renovar-nombre').textContent = nombre;
+            document.getElementById('form-renovar').action = '/superadmin/renovar/' + id;
+
+            // Reset
+            document.getElementById('renovar-fecha').value = '';
+            document.getElementById('renovar-periodo').value = '30';
+            document.getElementById('renovar-plan-tipo').value = planTipo || 'mensual';
+            document.getElementById('renovar-tipo-select').value = planTipo || 'mensual';
+
+            // Reset botones de periodo rapido
+            document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('seleccionado'));
+            document.querySelectorAll('.periodo-btn')[1].classList.add('seleccionado'); // 30 dias por defecto
+
+            document.getElementById('modal-renovar').classList.add('activo');
+        }
+
+        function cerrarModalRenovar() {
+            document.getElementById('modal-renovar').classList.remove('activo');
+        }
+
+        function seleccionarPeriodo(dias, btn) {
+            document.getElementById('renovar-periodo').value = dias;
+            document.getElementById('renovar-fecha').value = '';
+            document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('seleccionado'));
+            btn.classList.add('seleccionado');
+        }
+
+        function deseleccionarPeriodos() {
+            document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('seleccionado'));
+            document.getElementById('renovar-periodo').value = '';
+        }
+
+        function confirmarRenovacion() {
+            const fecha = document.getElementById('renovar-fecha').value;
+            const periodo = document.getElementById('renovar-periodo').value;
+            if (!fecha && !periodo) {
+                alert('Selecciona un periodo rapido o una fecha de vencimiento.');
+                return false;
+            }
+            return true;
+        }
+
+        // Cerrar modal con click fuera
+        document.getElementById('modal-renovar').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalRenovar();
+        });
+
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') cerrarModalRenovar();
+        });
+
+        // Auto-switch a alertas si hay y no hay pendientes
+        {% if count_alertas > 0 and negocios|length == 0 %}
+        switchTab('alertas');
+        {% endif %}
+
+        // Auto-ocultar flash messages despues de 5 segundos
+        document.querySelectorAll('.flash-msg').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.4s ease';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 400);
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

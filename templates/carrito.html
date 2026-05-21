@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tu Pedido - {{ negocio.nombre }}</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css', v=v) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/carrito.css', v=v) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nortfood-ui.css', v=v) }}">
+
+    <!-- PWA Manifest para NortFood -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FB8C00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="blank-translucent">
+    <meta name="apple-mobile-web-app-title" content="NortFood">
+    <link rel="apple-touch-icon" href="/static/img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/img/icon-512x512.png">
+</head>
+<body class="carrito-body">
+
+    <header class="carrito-header">
+        <div class="carrito-header-top">
+            <div class="carrito-logo-container">
+                {% if negocio.logo_url %}
+                    <img src="{{ negocio.logo_url }}" alt="Logo" class="carrito-logo-img">
+                {% else %}
+                    <div class="carrito-logo-placeholder">🏪</div>
+                {% endif %}
+            </div>
+            <div class="carrito-header-text">
+                <span class="carrito-subtitle">Tu Pedido</span>
+                <h1 class="carrito-titulo">{{ negocio.nombre }}</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="carrito-container">
+        {% if cliente %}
+        <section class="carrito-cliente-card">
+            <div class="carrito-cliente-avatar">{{ cliente.nombre[0] | upper }}</div>
+            <div class="carrito-cliente-info">
+                <span class="carrito-cliente-nombre">{{ cliente.nombre }}</span>
+                <span class="carrito-cliente-email">{{ cliente.email }}</span>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ✅ NUEVO: LISTA DE PRODUCTOS (Se llena con JS) -->
+        <section class="carrito-section">
+            <h3 class="carrito-section-title">🛒 Tu Pedido</h3>
+            <div id="lista-items" class="carrito-items-list">
+                <div class="carrito-loading">Cargando productos...</div>
+            </div>
+        </section>
+
+        <section class="carrito-section">
+            <h3 class="carrito-section-title">📦 ¿Cómo recibís tu pedido?</h3>
+
+            <div class="carrito-entrega-options">
+                {% if negocio.ofrece_delivery %}
+                <label class="carrito-radio-card" onclick="seleccionarEntrega('domicilio')">
+                    <input type="radio" name="entrega" value="domicilio" id="entrega-dom">
+                    <span class="radio-check">🏍️</span>
+                    <div class="radio-text">Envío a Domicilio</div>
+                </label>
+                {% endif %}
+
+                <label class="carrito-radio-card" onclick="seleccionarEntrega('retiro')">
+                    <input type="radio" name="entrega" value="retiro" id="entrega-ret" checked>
+                    <span class="radio-check">{% if negocio.logo_url %}<img src="{{ negocio.logo_url }}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">{% else %}🏪{% endif %}</span>
+                    <div class="radio-text">Retiro por el Local</div>
+                </label>
+            </div>
+
+            <div id="panel-direcciones" class="carrito-direcciones-panel" style="display:none;">
+                <!-- Se llena dinámicamente con la ubicación del Home (localStorage) -->
+            </div>
+        </section>
+
+        <section class="carrito-section">
+            <h3 class="carrito-section-title">💳 ¿Cómo vas a pagar?</h3>
+
+            <div class="carrito-pago-grid">
+                <div class="carrito-pago-card efectivo seleccionado" onclick="seleccionarPago('efectivo', this)">
+                    <div class="pago-icono">💵</div>
+                    <div class="pago-info">
+                        <span class="pago-nombre">Efectivo</span>
+                        <small class="pago-desc">Paga al recibir</small>
+                    </div>
+                    <div class="pago-check">✅</div>
+                </div>
+
+                {% if negocio.acepta_transferencia %}
+                <div class="carrito-pago-card transferencia" onclick="seleccionarPago('transferencia', this)">
+                    <div class="pago-icono">📱</div>
+                    <div class="pago-info">
+                        <span class="pago-nombre">Transferencia</span>
+                        {% if negocio.alias_bancario %}
+                        <small class="pago-desc">Alias: <span class="pago-alias">{{ negocio.alias_bancario }}</span></small>
+                        {% else %}
+                        <small class="pago-desc">Alias/CBU</small>
+                        {% endif %}
+                    </div>
+                    <div class="pago-check">✅</div>
+                </div>
+                {% endif %}
+            </div>
+            <input type="hidden" id="input-metodo-pago" value="efectivo">
+        </section>
+
+    </main>
+
+    <!-- Footer FIJO fuera del main para que position:fixed funcione siempre -->
+    <footer class="carrito-footer">
+        <div class="carrito-footer-inner">
+            <div class="carrito-subtotal-row">
+                <span>Subtotal productos</span>
+                <span class="carrito-subtotal-precio" id="display-subtotal">$0.00</span>
+            </div>
+            <div class="carrito-tarifa-row" id="display-delivery-row" style="display:none;">
+                <span>Envío a domicilio</span>
+                <span class="carrito-tarifa-precio" id="display-delivery">$0</span>
+            </div>
+            <div class="carrito-tarifa-row">
+                <span>Tarifa de servicio</span>
+                <span class="carrito-tarifa-precio" id="display-tarifa">${{ tarifa_servicio }}</span>
+            </div>
+            <div class="carrito-total-row">
+                <span>Total a pagar</span>
+                <span class="carrito-total-precio" id="display-total">$0.00</span>
+            </div>
+            <button id="btn-hacer-pedido" class="carrito-btn-final disabled" onclick="enviarPedido()">
+                Confirmar Pedido
+            </button>
+            <a href="/{{ negocio.slug }}" class="carrito-btn-volver">← Seguir comprando</a>
+        </div>
+    </footer>
+
+    <script>
+        window.NEGOCIO_SLUG = "{{ negocio.slug }}";
+        window.CLIENTE_ID = "{{ session.get('cliente_id') or '' }}";
+        window.CLIENTE_NOMBRE = "{{ cliente.nombre if cliente else 'Cliente Anónimo' }}";
+        window.CLIENTE_TELEFONO = "{{ cliente.telefono if cliente and cliente.telefono else '' }}";
+        window.DIRECCIONES_CLIENTE = {{ cliente.direcciones | tojson if cliente and cliente.direcciones else '[]' }};
+        window.TARIFA_SERVICIO = {{ tarifa_servicio }};
+        window.ZONAS_DELIVERY = {{ (negocio.zonas_delivery or []) | tojson | safe }};
+        window.ZONA_DELIVERY_ACTIVA = {{ 'true' if negocio.zona_delivery_activa else 'false' }};
+        window.NEGOCIO_NOMBRE = "{{ negocio.nombre }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/nortfood-ui.js', v=v) }}"></script>
+    <script src="{{ url_for('static', filename='js/nortfood-sounds.js', v=v) }}"></script>
+    <script src="{{ url_for('static', filename='js/carrito.js', v=v) }}"></script>
+</body>
+</html>

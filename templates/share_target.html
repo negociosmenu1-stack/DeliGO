@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Enviar comprobante - NortFood</title>
+
+    <!-- PWA Manifest para NortFood -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FB8C00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="blank-translucent">
+    <meta name="apple-mobile-web-app-title" content="NortFood">
+    <link rel="apple-touch-icon" href="/static/img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/img/icon-512x512.png">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; font-family:'Nunito',sans-serif; background:#f4f6f8; }
+        .share-container { max-width:500px; margin:0 auto; padding:20px 16px; }
+        .share-header { text-align:center; padding:24px 16px; margin-bottom:20px; }
+        .share-header-icon { font-size:48px; margin-bottom:10px; }
+        .share-header h1 { margin:0; font-size:20px; color:#2c3e50; }
+        .share-header p { margin:6px 0 0; color:#888; font-size:14px; }
+        .share-file-preview { background:white; border-radius:14px; padding:16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .share-file-icon { width:48px; height:48px; background:#fff3e0; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+        .share-file-info { flex:1; min-width:0; }
+        .share-file-name { font-weight:800; font-size:14px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .share-file-type { font-size:12px; color:#999; }
+        .share-text-preview { background:white; border-radius:14px; padding:16px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .share-text-preview p { margin:0; font-size:14px; color:#333; word-break:break-all; }
+        .share-text-label { font-size:11px; color:#999; font-weight:700; margin-bottom:4px; }
+        .share-url-preview { background:white; border-radius:14px; padding:16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .share-url-icon { width:48px; height:48px; background:#e3f2fd; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+        .share-url-link { font-size:13px; color:#1976d2; word-break:break-all; }
+        .share-section-title { font-size:14px; font-weight:800; color:#555; margin-bottom:10px; }
+        .pedido-option { background:white; border-radius:14px; padding:14px; margin-bottom:10px; cursor:pointer; transition:all 0.2s; border:2px solid transparent; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        .pedido-option:hover { border-color:#FB8C00; background:#fff8f0; }
+        .pedido-option:active { transform:scale(0.98); }
+        .pedido-option-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+        .pedido-option-negocio { font-weight:800; font-size:15px; color:#333; }
+        .pedido-option-estado { font-size:11px; font-weight:800; padding:3px 8px; border-radius:10px; }
+        .estado-recibido { background:#fff3e0; color:#e65100; }
+        .estado-preparando { background:#e3f2fd; color:#1565c0; }
+        .estado-en_camino { background:#f3e5f5; color:#7b1fa2; }
+        .pedido-option-info { font-size:12px; color:#777; }
+        .share-empty { text-align:center; padding:40px 20px; color:#aaa; }
+        .share-empty-icon { font-size:40px; margin-bottom:10px; }
+        .btn-cancelar { display:block; width:100%; padding:12px; border:1.5px solid #e8e8e8; background:white; color:#888; font-size:14px; font-weight:700; font-family:'Nunito',sans-serif; border-radius:12px; cursor:pointer; margin-top:16px; text-align:center; text-decoration:none; }
+        .btn-cancelar:hover { background:#f5f5f5; }
+        .share-sending { text-align:center; padding:60px 20px; }
+        .share-sending-spinner { width:40px; height:40px; border:4px solid #ffe0b2; border-top-color:#FB8C00; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="share-container">
+        <div class="share-header">
+            <div class="share-header-icon">📎</div>
+            <h1>Enviar comprobante</h1>
+            <p>Seleccioná a qué pedido enviar el archivo</p>
+        </div>
+
+        {% if pending_file %}
+        <div class="share-file-preview">
+            <div class="share-file-icon">{{ '📄' if pending_file.endswith('.pdf') else '🖼️' }}</div>
+            <div class="share-file-info">
+                <div class="share-file-name">{{ pending_file }}</div>
+                <div class="share-file-type">{{ 'Documento PDF' if pending_file.endswith('.pdf') else 'Imagen' }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if shared_text %}
+        <div class="share-text-preview">
+            <div class="share-text-label">Texto compartido</div>
+            <p>{{ shared_text }}</p>
+        </div>
+        {% endif %}
+
+        {% if shared_url %}
+        <div class="share-url-preview">
+            <div class="share-url-icon">🔗</div>
+            <div style="flex:1;min-width:0;">
+                <div class="share-text-label">Enlace compartido</div>
+                <a href="{{ shared_url }}" target="_blank" class="share-url-link">{{ shared_url }}</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="share-section-title">Tus pedidos activos</div>
+
+        {% if pedidos %}
+            {% for p in pedidos %}
+            <div class="pedido-option" onclick="enviarComprobante('{{ p._id }}')">
+                <div class="pedido-option-top">
+                    <span class="pedido-option-negocio">{{ p.negocio_nombre }}</span>
+                    <span class="pedido-option-estado estado-{{ p.estado }}">{{ p.estado | replace('_', ' ') }}</span>
+                </div>
+                <div class="pedido-option-info">
+                    ${{ "%.2f" | format(p.total) }} · {{ p.metodo_entrega }} · {{ p.fecha.strftime('%d/%m %H:%M') if p.fecha else '' }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="share-empty">
+                <div class="share-empty-icon">📦</div>
+                <h3>No tenés pedidos activos</h3>
+                <p>Hacé un pedido primero para poder enviar un comprobante</p>
+            </div>
+        {% endif %}
+
+        <a href="/" class="btn-cancelar">Cancelar</a>
+    </div>
+
+    <div id="sending-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.9); z-index:100; align-items:center; justify-content:center;">
+        <div class="share-sending">
+            <div class="share-sending-spinner"></div>
+            <p style="font-weight:800; color:#FB8C00;">Enviando comprobante...</p>
+        </div>
+    </div>
+
+    <form id="share-form" method="POST" action="/share-target" enctype="multipart/form-data" style="display:none;">
+        <input type="hidden" name="pedido_id" id="share-pedido-id">
+        <input type="hidden" name="shared_text" id="share-text" value="{{ shared_text or '' }}">
+        <input type="hidden" name="shared_url" id="share-url" value="{{ shared_url or '' }}">
+    </form>
+
+    <script>
+    function enviarComprobante(pedidoId) {
+        document.getElementById('share-pedido-id').value = pedidoId;
+        document.getElementById('sending-overlay').style.display = 'flex';
+        document.getElementById('share-form').submit();
+    }
+    </script>
+</body>
+</html>

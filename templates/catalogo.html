@@ -1,0 +1,462 @@
+<!-- BUSCADOR -->
+<div class="cat-search-wrap">
+    <div class="cat-search-box">
+        <svg class="cat-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="buscador" placeholder="Buscar en {{ negocio.nombre }}..." oninput="filtrarCatalogo()">
+    </div>
+</div>
+
+<!-- GENEROS (ropa) -->
+{% if negocio.rubro == 'ropa' %}
+<div class="cat-pills-bar generos-bar">
+    <div class="cat-pill activo" onclick="filtrarGenero('todas', this)" aria-selected="true">Todas</div>
+    <div class="cat-pill" onclick="filtrarGenero('hombre', this)">Hombre</div>
+    <div class="cat-pill" onclick="filtrarGenero('mujer', this)">Mujer</div>
+    <div class="cat-pill" onclick="filtrarGenero('unisex', this)">Unisex</div>
+    <div class="cat-pill" onclick="filtrarGenero('ninos', this)">Niños/as</div>
+</div>
+{% endif %}
+
+<!-- CATEGORIAS -->
+<div class="cat-pills-bar categorias-bar">
+    <div class="cat-pill activo" onclick="filtrarCategoria('todas', this)">Todas</div>
+    {% if productos | selectattr('categoria', 'equalto', 'Sin Categoria') | list | length > 0 %}
+    <div class="cat-pill" onclick="filtrarCategoria('Sin Categoria', this)">Sin Categoria</div>
+    {% endif %}
+    {% for cat in negocio.categorias %}
+    <div class="cat-pill" onclick="filtrarCategoria('{{ cat }}', this)">{{ cat }}</div>
+    {% endfor %}
+    {% if session.get('negocio_slug') == negocio.slug %}
+    <div class="cat-pill cat-pill-add" onclick="abrirModal('modal-nueva-cat')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </div>
+    {% endif %}
+</div>
+
+{% if session.get('negocio_slug') == negocio.slug and negocio.rubro == 'restaurante' %}
+<div class="cat-gestion-bar" onclick="abrirModal('modal-gestion-agregados')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>Gestionar Agregados</span>
+</div>
+{% endif %}
+
+<!-- LISTA DE PRODUCTOS -->
+<div class="cat-products" id="contenedor-productos">
+    {% if session.get('negocio_slug') == negocio.slug %}
+    <div class="cat-product-card cat-product-add" onclick="abrirModalNuevoProducto()">
+        <div class="cat-product-add-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="cat-product-add-text">
+            <span class="cat-product-add-title">Agregar Producto</span>
+            <span class="cat-product-add-sub">Toca para crear uno nuevo</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% for prod in productos %}
+    <div class="cat-product-card {% if not prod.stock %}sin-stock{% endif %}"
+         data-producto-id="{{ prod._id }}"
+         data-nombre="{{ prod.nombre|lower }}"
+         data-precio="{{ prod.precio }}"
+         data-categoria="{{ prod.categoria }}"
+         {% if negocio.rubro == 'ropa' %}data-genero="{{ prod.genero|default('', true)|lower }}" data-talles="{{ prod.talles|join(',') }}" data-colores="{{ prod.colores|join(',') }}" data-material="{{ prod.material|default('', true) }}" {% endif %}
+         {% if negocio.rubro == 'restaurante' %}data-descripcion="{{ prod.descripcion|default('', true) }}" data-agregados-ids="{{ prod.agregados_ids|join(',') }}" data-secciones='{{ prod.secciones|tojson }}' data-recomendados="{{ prod.recomendados|join(',') }}" {% endif %}
+         data-stock="{{ 'true' if prod.stock else 'false' }}"
+         data-imagen-principal="{{ prod.imagen_url|default('', true) }}"
+         data-imagenes="{{ prod.imagenes_extra|join(',')|default('', true) }}">
+
+        {% if not prod.stock %}<div class="cat-badge-nostock">SIN STOCK</div>{% endif %}
+
+        {% if session.get('negocio_slug') == negocio.slug %}
+        <button class="cat-product-options" onclick="event.stopPropagation(); abrirEditarProducto(this)"
+                data-id="{{ prod._id }}" data-nombre="{{ prod.nombre }}" data-precio="{{ prod.precio }}" data-categoria="{{ prod.categoria }}"
+                data-stock="{{ 'true' if prod.stock else 'false' }}"
+                {% if negocio.rubro == 'ropa' %}data-talles="{{ prod.talles|join(',') }}" data-colores="{{ prod.colores|join(',') }}" data-material="{{ prod.material|default('', true) }}" data-genero="{{ prod.genero|default('', true) }}" {% endif %}
+                {% if negocio.rubro == 'restaurante' %}data-descripcion="{{ prod.descripcion|default('', true) }}" data-agregados-ids="{{ prod.agregados_ids|join(',') }}" data-secciones='{{ prod.secciones|tojson }}' data-recomendados="{{ prod.recomendados|join(',') }}" {% endif %}
+                data-imagenes="{{ prod.imagenes_extra|join(',')|default('', true) }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+        {% endif %}
+
+        <div class="cat-product-img" onclick="abrirDetalleProducto(this.parentElement)">
+            {% if prod.imagen_url %}<img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}" loading="lazy">{% else %}<div class="cat-product-img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>{% endif %}
+            {% if prod.imagenes_extra and prod.imagenes_extra | length > 1 %}
+            <div class="cat-badge-morephotos">+{{ prod.imagenes_extra | length - 1 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="cat-product-info" onclick="abrirDetalleProducto(this.parentElement)">
+            <div class="cat-product-name">{{ prod.nombre }}</div>
+            {% if negocio.rubro == 'restaurante' and prod.descripcion %}
+            <div class="cat-product-desc">{{ prod.descripcion[:60] }}{% if prod.descripcion|length > 60 %}...{% endif %}</div>
+            {% endif %}
+            <div class="cat-product-price-row">
+                <span class="cat-product-price">${{ "%.2f" | format(prod.precio) }}</span>
+            </div>
+        </div>
+
+        <div class="cat-product-actions">
+            {% if prod.stock %}
+            <div class="cat-qty-controls">
+                <button class="cat-qty-btn cat-qty-minus" data-producto-id="{{ prod._id }}" onclick="event.stopPropagation(); eliminarDelCarrito('{{ prod._id }}')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <span class="cat-qty-num" id="cant-{{ prod._id }}">0</span>
+                <button class="cat-qty-btn cat-qty-plus" data-producto-id="{{ prod._id }}" onclick="event.stopPropagation(); abrirDetalleProducto(this.closest('.cat-product-card'))">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+            </div>
+            {% else %}
+            <span class="cat-nostock-label">No disponible</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL DETALLE PRODUCTO -->
+<!-- ============================================ -->
+<div id="modal-detalle-producto" class="modal">
+    <div class="modal-contenido modal-detalle-contenido">
+        <span class="cerrar" onclick="cancelarDetalle()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <div class="detalle-galeria">
+            <button class="detalle-galeria-btn detalle-galeria-prev oculto" onclick="detalleCambiarFoto(-1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="detalle-galeria-principal"><img id="detalle-img-principal" src="" alt=""></div>
+            <button class="detalle-galeria-btn detalle-galeria-next oculto" onclick="detalleCambiarFoto(1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+        </div>
+        <div class="detalle-thumbnails" id="detalle-thumbnails"></div>
+        <div class="detalle-foto-indicador" id="detalle-foto-indicador"></div>
+        <div class="detalle-info">
+            <div class="detalle-header">
+                <div>
+                    <h2 class="detalle-nombre" id="titulo-detalle-prod"></h2>
+                    <div class="detalle-categoria" id="detalle-categoria"></div>
+                </div>
+                <div class="detalle-precio" id="detalle-precio"></div>
+            </div>
+            <div id="detalle-seccion-ropa">
+                <div class="detalle-seccion" id="detalle-talles-container"><span class="detalle-opcion-label">Talle</span><div id="detalle-talles" class="detalle-chips"></div></div>
+                <div class="detalle-seccion" id="detalle-colores-container"><span class="detalle-opcion-label">Color</span><div id="detalle-colores" class="detalle-chips"></div></div>
+                <div class="detalle-atributo" id="detalle-material-container"><span class="detalle-atributo-label">Material:</span><span class="detalle-atributo-valor" id="detalle-material"></span></div>
+                <div class="detalle-atributo" id="detalle-genero-container"><span class="detalle-atributo-label">Genero:</span><span class="detalle-atributo-valor" id="detalle-genero"></span></div>
+            </div>
+            <div id="detalle-seccion-restaurante">
+                <div class="detalle-seccion" id="detalle-descripcion-container"><span class="detalle-opcion-label">Descripcion / Ingredientes</span><p class="detalle-descripcion-texto" id="detalle-descripcion"></p></div>
+                <div class="detalle-seccion" id="detalle-agregados-global-container"><span class="detalle-opcion-label">Agregados</span><div id="detalle-agregados-global" class="detalle-agregados-lista"></div></div>
+                <div class="detalle-seccion" id="detalle-secciones-custom-container"></div>
+                <div class="detalle-seccion" id="detalle-recomendados-container"><span class="detalle-opcion-label">Te puede interesar</span><div id="detalle-recomendados" class="detalle-recomendados-lista"></div></div>
+            </div>
+            <div id="detalle-sin-stock" class="detalle-sin-stock" style="display:none">Sin stock disponible</div>
+            <div id="detalle-controles" class="detalle-bottom-bar">
+                <div class="detalle-cantidad">
+                    <button id="detalle-btn-menos" class="cat-qty-btn cat-qty-minus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <span id="detalle-cant-numero" class="cat-qty-num">0</span>
+                    <button id="detalle-btn-mas" class="cat-qty-btn cat-qty-plus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+                <div class="detalle-precio-total" id="detalle-precio-total"></div>
+            </div>
+            <button id="detalle-btn-agregar" class="btn-agregar-carrito" onclick="detalleAgregarAlCarrito()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                Agregar al carrito
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL NUEVO PRODUCTO -->
+<!-- ============================================ -->
+<div id="modal-producto" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModal('modal-producto')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <h3 style="text-align:center; margin-top:0;">Nuevo Producto</h3>
+        <form id="form-nuevo-prod" action="/agregar-producto/{{ negocio.slug }}" method="POST" enctype="multipart/form-data" class="formulario-admin">
+            <label>Categoria</label>
+            <select name="categoria" required>
+                <option value="Sin Categoria">Sin categoria</option>
+                {% for cat in negocio.categorias %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+            </select>
+            <input type="text" name="nombre" placeholder="Nombre del producto" required>
+            <input type="number" name="precio" step="0.01" placeholder="Precio" required>
+
+            {% if negocio.rubro == 'ropa' %}
+            <label>Talles estandar:</label>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                {% for t in ['XS', 'S', 'M', 'L', 'XL', 'XXL'] %}
+                <label><input type="checkbox" name="talles_std" value="{{ t }}"> {{ t }}</label>
+                {% endfor %}
+            </div>
+            <input type="text" name="talles_custom" placeholder="Talles personalizados (separados por coma)">
+            <input type="text" name="colores" placeholder="Colores (separados por coma)">
+            <input type="text" name="material" placeholder="Material (opcional)">
+            <label>Genero</label>
+            <select name="genero">
+                <option value="">Seleccionar...</option>
+                <option value="Hombre">Hombre</option><option value="Mujer">Mujer</option>
+                <option value="Unisex">Unisex</option><option value="Ninos/as">Ninos/as</option>
+            </select>
+            {% elif negocio.rubro == 'restaurante' %}
+            <label>Descripcion o Ingredientes:</label>
+            <textarea name="descripcion" rows="3" placeholder="Detalles del plato..."></textarea>
+
+            <div class="seccion-agregados-config">
+                <div class="titulo-seccion-config">Agregados Disponibles</div>
+                <div class="hint-seccion-config">Selecciona los agregados para este producto.</div>
+                <div class="agregados-cat-tabs" id="nuevo-agregados-cat-tabs">
+                    <div class="agregados-cat-tab activo" onclick="filtrarAgregadosPorCat('nuevo', 'todas', this)">Todas</div>
+                    {% for cat in agregados_categorias %}<div class="agregados-cat-tab" onclick="filtrarAgregadosPorCat('nuevo', '{{ cat }}', this)">{{ cat }}</div>{% endfor %}
+                </div>
+                <div id="nuevo-agregados-checkboxes" class="agregados-checkboxes">
+                    {% for agr in agregados %}
+                    <div class="agregado-check-item" data-categoria="{{ agr.categoria }}">
+                        <input type="checkbox" name="agregados_ids" value="{{ agr._id }}">
+                        <span class="agregado-check-nombre">{{ agr.nombre }}</span>
+                        <span class="agregado-check-precio">${{ "%.2f"|format(agr.precio) }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if not agregados %}<div class="agregados-vacio">No hay agregados. <a href="#" onclick="abrirModal('modal-gestion-agregados')">Crear</a></div>{% endif %}
+                </div>
+            </div>
+
+            <div class="seccion-secciones-config">
+                <div class="titulo-seccion-config">Secciones de Opciones</div>
+                <div class="hint-seccion-config">Ej: "Elige tu bebida", "Guarnicion".</div>
+                <div id="nuevo-secciones-container" class="secciones-container"></div>
+                <button type="button" class="btn-agregar-seccion" onclick="agregarSeccionNuevo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar Seccion</button>
+                <input type="hidden" name="secciones" id="nuevo-secciones-json" value="[]">
+
+                <label style="margin-top:15px;">Productos recomendados:</label>
+                <div style="max-height:100px; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:8px;">
+                    {% for prod_existente in productos %}
+                    <label style="display:block; font-weight:400; margin:4px 0; font-size:13px;">
+                        <input type="checkbox" name="productos_recomendados" value="{{ prod_existente._id }}"> {{ prod_existente.nombre }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <label>Fotos del producto:</label>
+            <div class="galeria-wrap">
+                <div id="galeria-nuevo-prod" class="galeria-tinder"></div>
+                <input type="file" id="input-fotos-nuevo" name="fotos" multiple accept="image/*" class="file-input-hidden">
+            </div>
+            <input type="hidden" id="orden-fotos-nuevo" name="orden_imagenes" value="[]">
+
+            <label><input type="checkbox" name="stock" checked> Producto disponible</label>
+            <button type="submit" class="btn-final">Subir Producto</button>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL EDITAR PRODUCTO -->
+<!-- ============================================ -->
+<div id="modal-editar-prod" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModal('modal-editar-prod')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <h3 style="text-align:center; margin-top:0;">Editar Producto</h3>
+        <form id="form-editar-prod" action="" method="POST" enctype="multipart/form-data" class="formulario-admin">
+            <input type="hidden" id="edit-producto-id" name="producto_id">
+            <label>Categoria</label>
+            <select name="categoria" id="edit-categoria">
+                <option value="Sin Categoria">Sin categoria</option>
+                {% for cat in negocio.categorias %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+            </select>
+            <input type="text" id="edit-nombre" name="nombre" placeholder="Nombre" required>
+            <input type="number" id="edit-precio" name="precio" step="0.01" placeholder="Precio" required>
+
+            {% if negocio.rubro == 'ropa' %}
+            <input type="text" id="edit-talles" name="talles_edit" placeholder="Talles">
+            <input type="text" id="edit-colores" name="colores_edit" placeholder="Colores">
+            <input type="text" id="edit-material" name="material_edit" placeholder="Material">
+            <input type="text" id="edit-genero" name="genero_edit" placeholder="Genero">
+            {% elif negocio.rubro == 'restaurante' %}
+            <textarea id="edit-descripcion" name="descripcion_edit" rows="3" placeholder="Descripcion"></textarea>
+            <div class="seccion-agregados-config">
+                <div class="titulo-seccion-config">Agregados</div>
+                <div class="agregados-cat-tabs" id="edit-agregados-cat-tabs">
+                    <div class="agregados-cat-tab activo" onclick="filtrarAgregadosPorCat('edit', 'todas', this)">Todas</div>
+                    {% for cat in agregados_categorias %}<div class="agregados-cat-tab" onclick="filtrarAgregadosPorCat('edit', '{{ cat }}', this)">{{ cat }}</div>{% endfor %}
+                </div>
+                <div id="edit-agregados-checkboxes" class="agregados-checkboxes">
+                    {% for agr in agregados %}
+                    <div class="agregado-check-item" data-categoria="{{ agr.categoria }}">
+                        <input type="checkbox" name="agregados_ids" value="{{ agr._id }}" id="edit-agr-{{ agr._id }}">
+                        <span class="agregado-check-nombre">{{ agr.nombre }}</span>
+                        <span class="agregado-check-precio">${{ "%.2f"|format(agr.precio) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="seccion-secciones-config">
+                <div class="titulo-seccion-config">Secciones</div>
+                <div id="edit-secciones-container" class="secciones-container"></div>
+                <button type="button" class="btn-agregar-seccion" onclick="agregarSeccionEdit()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar Seccion</button>
+                <input type="hidden" name="secciones" id="edit-secciones-json" value="[]">
+                <label>Recomendados:</label>
+                <div style="max-height:100px; overflow-y:auto; background:#f9f9f9; padding:8px; border-radius:8px;">
+                    {% for prod_existente in productos %}
+                    <label style="display:block; font-weight:400; margin:4px 0; font-size:13px;">
+                        <input type="checkbox" name="productos_recomendados" value="{{ prod_existente._id }}" id="edit-rec-{{ prod_existente._id }}"> {{ prod_existente.nombre }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            <label>Fotos nuevas:</label>
+            <div class="galeria-wrap">
+                <div id="galeria-edit-prod" class="galeria-tinder"></div>
+                <input type="file" id="input-fotos-edit" name="fotos" multiple accept="image/*" class="file-input-hidden">
+            </div>
+            <input type="hidden" id="orden-fotos-edit" name="orden_imagenes" value="[]">
+
+            <label><input type="checkbox" id="edit-stock" name="stock" checked> Disponible</label>
+            <button type="submit" class="btn-final">Guardar Cambios</button>
+            <a href="#" id="link-eliminar-prod" class="btn-eliminar">Eliminar Producto</a>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL NUEVA CATEGORIA -->
+<!-- ============================================ -->
+<div id="modal-nueva-cat" class="modal modal-centrado">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModal('modal-nueva-cat')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <h3 style="text-align:center;">Nueva Categoria</h3>
+        <form action="/agregar-categoria/{{ negocio.slug }}" method="POST" class="formulario-admin">
+            <input type="text" name="nombre_categoria" placeholder="Nombre de la categoria" required>
+            <button type="submit" class="btn-final">Crear</button>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL GESTIONAR CATEGORIA -->
+<!-- ============================================ -->
+<div id="modal-gestion-cat" class="modal modal-centrado">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModal('modal-gestion-cat')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <h3 style="text-align:center;">Gestionar Categoria</h3>
+        <form action="/editar-categoria/{{ negocio.slug }}" method="POST" class="formulario-admin">
+            <input type="hidden" id="gestion-cat-vieja" name="nombre_viejo">
+            <input type="text" id="gestion-cat-nueva" name="nombre_nuevo" placeholder="Editar nombre" required>
+            <button type="submit" class="btn-final">Guardar Cambios</button>
+        </form>
+        <a href="#" id="link-borrar-cat" class="btn-eliminar">Eliminar Categoria</a>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL GESTIONAR AGREGADOS -->
+<!-- ============================================ -->
+<div id="modal-gestion-agregados" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModal('modal-gestion-agregados')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <h3 style="text-align:center;">Gestionar Agregados</h3>
+        <form action="/agregar-agregado/{{ negocio.slug }}" method="POST" enctype="multipart/form-data" class="formulario-admin">
+            <h4 style="margin:10px 0 5px;">Nuevo Agregado</h4>
+            <select name="categoria">
+                <option value="">Sin categoria</option>
+                {% for cat in agregados_categorias %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+            </select>
+            <input type="text" name="nombre" placeholder="Nombre" required>
+            <input type="number" name="precio" step="0.01" placeholder="Precio" required>
+            <label>Foto (Opcional):</label><input type="file" name="foto" accept="image/*">
+            <button type="submit" class="btn-final">Agregar</button>
+        </form>
+
+        {% if agregados_categorias %}
+        <div class="agregados-categorias-section">
+            <div class="titulo-seccion-config">Categorias</div>
+            <div class="agregados-cat-list">
+                {% for cat in agregados_categorias %}
+                <div class="agregados-cat-item">
+                    <span>{{ cat }}</span>
+                    <form action="/eliminar-categoria-agregado/{{ negocio.slug }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="nombre" value="{{ cat }}">
+                        <button type="submit" class="btn-elimina-cat-agr">x</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            <form action="/agregar-categoria-agregado/{{ negocio.slug }}" method="POST" class="agregados-cat-add-form">
+                <input type="text" name="nombre_categoria_agregado" placeholder="Nueva categoria...">
+                <button type="submit" class="btn-agregar-cat-agr">+</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div style="margin-top:15px;"><h4>Agregados Existentes</h4></div>
+        <div class="lista-agregados-admin">
+            {% for agr in agregados %}
+            <div class="agregado-admin-item">
+                <div class="agregado-admin-info">
+                    {% if agr.imagen_url %}<img src="{{ agr.imagen_url }}" class="agregado-admin-img">{% else %}<div class="agregado-admin-img-placeholder">?</div>{% endif %}
+                    <div class="agregado-admin-detalles">
+                        <strong>{{ agr.nombre }}</strong>
+                        <span class="agregado-admin-precio">${{ "%.2f"|format(agr.precio) }}</span>
+                        {% if agr.categoria %}<span class="agregado-admin-cat">{{ agr.categoria }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="agregado-admin-acciones">
+                    <button class="btn-editar-agregado" onclick="abrirEditarAgregado({id:'{{ agr._id }}', nombre:'{{ agr.nombre }}', precio:'{{ agr.precio }}', categoria:'{{ agr.categoria }}', imagen:'{{ agr.imagen_url }}'})">E</button>
+                    <form action="/eliminar-agregado/{{ agr._id }}" method="POST" onsubmit="return nortConfirmSubmit('¿Eliminar este agregado?', 'Eliminar agregado')">
+                        <button class="btn-eliminar-agregado" type="submit">X</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL EDITAR AGREGADO -->
+<!-- ============================================ -->
+<div id="modal-editar-agregado" class="modal modal-centrado">
+    <div class="modal-contenido">
+        <span class="cerrar" onclick="cerrarModal('modal-editar-agregado')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </span>
+        <h3 style="text-align:center;">Editar Agregado</h3>
+        <form id="form-editar-agregado" action="" method="POST" enctype="multipart/form-data" class="formulario-admin">
+            <select id="edit-agregado-categoria" name="categoria">
+                <option value="">Sin categoria</option>
+                {% for cat in agregados_categorias %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+            </select>
+            <input type="text" id="edit-agregado-nombre" name="nombre" required>
+            <input type="number" id="edit-agregado-precio" name="precio" step="0.01" required>
+            <div id="edit-agregado-foto-preview" class="agregado-foto-preview" style="display:none;"><img id="edit-agregado-foto-img" src="" alt=""></div>
+            <input type="file" name="foto" accept="image/*" class="agregado-foto-upload">
+            <label class="checkbox-peligro"><input type="checkbox" name="eliminar_foto" id="edit-agregado-eliminar-foto"> Eliminar foto actual</label>
+            <button type="submit" class="btn-final">Guardar Cambios</button>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts del catalogo -->
+<script src="{{ url_for('static', filename='js/catalogo.js', v=v) }}"></script>

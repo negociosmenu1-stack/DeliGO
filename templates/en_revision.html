@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tienda en Revision - NortFood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-principal: #38b087;
+            --bg-body: #f4f9f4;
+            --texto-oscuro: #2c3e50;
+            --texto-suave: #7f8c8d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--texto-oscuro);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .contenedor {
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .ilustracion {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px auto;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3);
+            animation: pulso 2s ease-in-out infinite;
+        }
+
+        .ilustracion svg {
+            width: 55px;
+            height: 55px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes pulso {
+            0%, 100% { transform: scale(1); box-shadow: 0 8px 25px rgba(243, 156, 18, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 12px 35px rgba(243, 156, 18, 0.4); }
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #f39c12;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .descripcion {
+            font-size: 16px;
+            color: var(--texto-suave);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .detalle {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .detalle-paso {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .detalle-paso:last-child {
+            margin-bottom: 0;
+        }
+
+        .paso-numero {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-principal);
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .paso-texto {
+            font-size: 14px;
+            color: var(--texto-oscuro);
+            line-height: 1.5;
+        }
+
+        .paso-texto strong {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .paso-texto span {
+            color: var(--texto-suave);
+            font-size: 13px;
+        }
+
+        .aviso {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 13px;
+            color: #f57f17;
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .aviso svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #f57f17;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .footer-text {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #bbb;
+        }
+
+        .footer-text a {
+            color: var(--color-principal);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ilustracion {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <div class="ilustracion" role="img" aria-label="Tienda en revision">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        </div>
+
+        <h1>Tienda en Revision</h1>
+
+        <p class="descripcion">
+            Esta tienda esta siendo verificada por nuestro equipo y estara disponible muy pronto.
+            El proceso de revision suele tardar unas pocas horas.
+        </p>
+
+        <div class="detalle">
+            <div class="detalle-paso">
+                <div class="paso-numero">1</div>
+                <div class="paso-texto">
+                    <strong>Registro completado</strong>
+                    <span>Los datos del negocio fueron recibidos correctamente.</span>
+                </div>
+            </div>
+
+            <div class="detalle-paso">
+                <div class="paso-numero">2</div>
+                <div class="paso-texto">
+                    <strong>Verificacion en curso</strong>
+                    <span>Nuestro equipo esta revisando la informacion del local para garantizar la seguridad de los compradores.</span>
+                </div>
+            </div>
+
+            <div class="detalle-paso">
+                <div class="paso-numero">3</div>
+                <div class="paso-texto">
+                    <strong>Activacion inminente</strong>
+                    <span>Una vez aprobada, la tienda sera accesible al publico de inmediato.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="aviso">
+            <svg viewBox="0 0 24 24">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>Si sos el propietario y ya pasaron mas de 24 horas, contactanos para acelerar el proceso.</span>
+        </div>
+
+        <p class="footer-text">
+            Volver a <a href="/login">Iniciar sesión</a> para verificar el estado
+        </p>
+    </div>
+</body>
+</html>

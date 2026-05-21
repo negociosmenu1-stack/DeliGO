@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#FB8C00">
+  <link rel="manifest" href="/manifest.json">
+  <title>Mis Favoritos — NortFood</title>
+
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Iconos Material -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/nortfood-ui.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+
+  <style>
+    /* ── Favoritos page overrides ── */
+    :root {
+      --nortfood-orange: #FB8C00;
+      --nortfood-orange-dark: #EF6C00;
+      --nortfood-orange-light: #FFF3E0;
+      --nortfood-bg: #FAFAFA;
+      --nortfood-card: #FFFFFF;
+      --nortfood-text: #212121;
+      --nortfood-text-secondary: #757575;
+      --nortfood-radius: 16px;
+      --nortfood-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --nortfood-nav-height: 64px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--nortfood-bg);
+      color: var(--nortfood-text);
+      min-height: 100vh;
+      padding-bottom: calc(var(--nortfood-nav-height) + 16px);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ── */
+    .fav-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--nortfood-orange);
+      color: #fff;
+      padding: 16px 20px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(251,140,0,0.25);
+    }
+
+    .fav-header .back-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .fav-header .back-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .fav-header h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .fav-header .fav-count {
+      margin-left: auto;
+      background: rgba(255,255,255,0.25);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    /* ── Grid ── */
+    .fav-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      padding: 18px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ── Business Card ── */
+    .negocio-card {
+      background: var(--nortfood-card);
+      border-radius: var(--nortfood-radius);
+      overflow: hidden;
+      box-shadow: var(--nortfood-shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .negocio-card:active {
+      transform: scale(0.97);
+    }
+
+    .negocio-card .card-img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      background: #f0f0f0;
+    }
+
+    .negocio-card .card-img-placeholder {
+      width: 100%;
+      height: 110px;
+      background: linear-gradient(135deg, var(--nortfood-orange-light), #FFE0B2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .negocio-card .card-img-placeholder .material-icons-round {
+      font-size: 40px;
+      color: var(--nortfood-orange);
+    }
+
+    .negocio-card .card-body {
+      padding: 10px 12px 12px;
+    }
+
+    .negocio-card .card-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .negocio-card .card-category {
+      font-size: 0.72rem;
+      color: var(--nortfood-text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .negocio-card .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--nortfood-text-secondary);
+    }
+
+    .negocio-card .card-meta .rating {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      color: #FFC107;
+      font-weight: 700;
+    }
+
+    .negocio-card .card-meta .rating .material-icons-round {
+      font-size: 14px;
+    }
+
+    .negocio-card .fav-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
+    .negocio-card .fav-badge .material-icons-round {
+      font-size: 18px;
+      color: #E53935;
+    }
+
+    /* ── Empty state ── */
+    .fav-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 32px;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+
+    .fav-empty .empty-icon {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--nortfood-orange-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .fav-empty .empty-icon .material-icons-round {
+      font-size: 48px;
+      color: var(--nortfood-orange);
+    }
+
+    .fav-empty h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: var(--nortfood-text);
+    }
+
+    .fav-empty p {
+      font-size: 0.88rem;
+      color: var(--nortfood-text-secondary);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .fav-empty .btn-explore {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--nortfood-orange);
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 12px 24px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .fav-empty .btn-explore:hover {
+      background: var(--nortfood-orange-dark);
+    }
+
+    .fav-empty .btn-explore .material-icons-round {
+      font-size: 18px;
+    }
+
+    /* ── Bottom Nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      background: #fff;
+      border-top: 1px solid #E0E0E0;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: var(--nortfood-nav-height);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+    }
+
+    .bottom-nav a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      text-decoration: none;
+      color: var(--nortfood-text-secondary);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 4px 0;
+      transition: color 0.2s;
+      position: relative;
+    }
+
+    .bottom-nav a .material-icons-round {
+      font-size: 24px;
+      transition: color 0.2s;
+    }
+
+    .bottom-nav a.active {
+      color: var(--nortfood-orange);
+    }
+
+    .bottom-nav a.active .material-icons-round {
+      color: var(--nortfood-orange);
+    }
+
+    .bottom-nav a .nav-badge {
+      position: absolute;
+      top: -2px;
+      right: -6px;
+      background: #E53935;
+      color: #fff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="fav-header">
+    <button class="back-btn" onclick="history.back()" aria-label="Volver">
+      <span class="material-icons-round">arrow_back</span>
+    </button>
+    <h1>Mis Favoritos</h1>
+    {% if negocios %}
+    <span class="fav-count">{{ negocios|length }}</span>
+    {% endif %}
+  </header>
+
+  <!-- ═══════════ CONTENT ═══════════ -->
+  {% if negocios and negocios|length > 0 %}
+  <main class="fav-grid">
+    {% for neg in negocios %}
+    <a href="/catalogo/{{ neg.id }}" class="negocio-card">
+      {% if neg.imagen %}
+      <img class="card-img" src="{{ neg.imagen }}" alt="{{ neg.nombre }}" loading="lazy">
+      {% else %}
+      <div class="card-img-placeholder">
+        <span class="material-icons-round">storefront</span>
+      </div>
+      {% endif %}
+      <div class="fav-badge">
+        <span class="material-icons-round">favorite</span>
+      </div>
+      <div class="card-body">
+        <div class="card-name">{{ neg.nombre }}</div>
+        <div class="card-category">{{ neg.categoria or 'Comida' }}</div>
+        <div class="card-meta">
+          {% if neg.puntuacion_promedio %}
+          <span class="rating">
+            <span class="material-icons-round">star</span>
+            {{ neg.puntuacion_promedio }}
+            {% if neg.total_resenas %}<small style="color:#999;font-weight:400;">({{ neg.total_resenas }})</small>{% endif %}
+          </span>
+          {% elif neg.calificacion %}
+          <span class="rating">
+            <span class="material-icons-round">star</span>
+            {{ neg.calificacion }}
+          </span>
+          {% endif %}
+          {% if neg.tiempo_entrega %}
+          <span>{{ neg.tiempo_entrega }} min</span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </main>
+
+  {% else %}
+  <div class="fav-empty">
+    <div class="empty-icon">
+      <span class="material-icons-round">favorite_border</span>
+    </div>
+    <h2>Sin favoritos aún</h2>
+    <p>Explora negocios cerca de ti y guarda tus favoritos para encontrarlos rápido aquí.</p>
+    <a href="/home" class="btn-explore">
+      <span class="material-icons-round">explore</span>
+      Explorar negocios
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- ═══════════ BOTTOM NAV ═══════════ -->
+  <nav class="bottom-nav">
+    <a href="/home">
+      <span class="material-icons-round">home</span>
+      <span>Inicio</span>
+    </a>
+    <a href="/promociones">
+      <span class="material-icons-round">local_offer</span>
+      <span>Promos</span>
+    </a>
+    <a href="/favoritos" class="active">
+      <span class="material-icons-round">favorite</span>
+      <span>Favoritos</span>
+    </a>
+    <a href="/carrito">
+      <span class="material-icons-round">shopping_cart</span>
+      <span>Carrito</span>
+    </a>
+    <a href="/perfil">
+      <span class="material-icons-round">person</span>
+      <span>Perfil</span>
+    </a>
+  </nav>
+
+  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script src="{{ url_for('static', filename='js/nortfood-ui.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+
+  <script>
+    // ── Remove from favorites via AJAX ──
+    document.querySelectorAll('.fav-badge').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = btn.closest('.negocio-card');
+        const url = card.getAttribute('href');
+        const negId = url.split('/').pop();
+
+        try {
+          const resp = await fetch('/api/favoritos/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ negocio_id: negId })
+          });
+          if (resp.ok) {
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              card.remove();
+              updateCount();
+            }, 300);
+          }
+        } catch (err) {
+          console.error('Error toggling favorito:', err);
+        }
+      });
+    });
+
+    function updateCount() {
+      const remaining = document.querySelectorAll('.negocio-card').length;
+      const badge = document.querySelector('.fav-count');
+      if (remaining === 0) {
+        // Replace grid with empty state
+        const grid = document.querySelector('.fav-grid');
+        if (grid) {
+          grid.outerHTML = `
+            <div class="fav-empty">
+              <div class="empty-icon">
+                <span class="material-icons-round">favorite_border</span>
+              </div>
+              <h2>Sin favoritos aún</h2>
+              <p>Explora negocios cerca de ti y guarda tus favoritos para encontrarlos rápido aquí.</p>
+              <a href="/home" class="btn-explore">
+                <span class="material-icons-round">explore</span>
+                Explorar negocios
+              </a>
+            </div>`;
+        }
+        if (badge) badge.remove();
+      } else {
+        if (badge) badge.textContent = remaining;
+      }
+    }
+  </script>
+</body>
+</html>

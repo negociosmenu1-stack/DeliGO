@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mis Pedidos - NortFood</title>
+
+    <!-- PWA Manifest para NortFood -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FB8C00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="blank-translucent">
+    <meta name="apple-mobile-web-app-title" content="NortFood">
+    <link rel="apple-touch-icon" href="/static/img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/img/icon-512x512.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nortfood-ui.css') }}">
+    <script src="{{ url_for('static', filename='js/nortfood-ui.js') }}" defer></script>
+
+    <style>
+        .hist-page { padding: 16px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; }
+        .hist-title { font-size: 22px; font-weight: 800; color: #2c3e50; margin-bottom: 16px; }
+
+        /* Tarjeta de negocio */
+        .hist-negocio { margin-bottom: 16px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .hist-negocio-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; transition: background 0.15s; }
+        .hist-negocio-header:hover { background: #f9f9f9; }
+        .hist-negocio-logo { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+        .hist-negocio-logo img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
+        .hist-negocio-info { flex: 1; min-width: 0; }
+        .hist-negocio-nombre { font-size: 15px; font-weight: 800; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hist-negocio-count { font-size: 12px; color: #999; }
+        .hist-negocio-arrow { font-size: 14px; color: #ccc; transition: transform 0.2s; }
+        .hist-negocio-arrow.abierto { transform: rotate(180deg); }
+
+        /* Lista de pedidos */
+        .hist-pedidos-list { display: none; padding: 0 16px 14px; }
+        .hist-pedidos-list.visible { display: block; }
+
+        /* Pedido individual */
+        .hist-pedido { background: #fafafa; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid #eee; }
+        .hist-pedido-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .hist-pedido-fecha { font-size: 12px; color: #999; }
+        .hist-pedido-estado { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; }
+        .hist-pedido-estado.entregado { background: #e8f5e9; color: #2e7d32; }
+        .hist-pedido-estado.cancelado { background: #ffebee; color: #c62828; }
+        .hist-pedido-estado.en_camino { background: #e3f2fd; color: #1565c0; }
+        .hist-pedido-estado.preparando { background: #fff3e0; color: #e65100; }
+        .hist-pedido-estado.recibido { background: #f3e5f5; color: #7b1fa2; }
+        .hist-pedido-estado.listo_para_retirar { background: #e0f7fa; color: #00838f; }
+
+        .hist-pedido-items { font-size: 13px; color: #555; margin-bottom: 6px; line-height: 1.5; }
+        .hist-pedido-items span { color: #999; }
+        .hist-pedido-total { font-size: 15px; font-weight: 800; color: #2c3e50; }
+        .hist-pedido-metodo { font-size: 11px; color: #999; margin-top: 2px; }
+
+        .hist-pedido-cancel-info { background: #fff5f5; border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 12px; color: #c62828; }
+        .hist-pedido-cancel-info strong { font-size: 11px; }
+
+        .hist-pedido-acciones { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .hist-btn { padding: 8px 14px; border: none; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.15s; font-family: 'Nunito', sans-serif; text-decoration: none; display: inline-block; }
+        .hist-btn-resena { background: #FB8C00; color: white; }
+        .hist-btn-resena:hover { background: #e67e00; }
+        .hist-btn-resena:disabled { background: #ccc; cursor: not-allowed; }
+        .hist-btn-repetir { background: #e8f5e9; color: #2e7d32; }
+        .hist-btn-repetir:hover { background: #c8e6c9; }
+        .hist-btn-ya-reseno { background: #f5f5f5; color: #999; cursor: default; }
+
+        /* Vacío */
+        .hist-vacio { text-align: center; padding: 60px 20px; color: #999; }
+        .hist-vacio-icon { font-size: 48px; margin-bottom: 12px; }
+        .hist-vacio h3 { font-size: 18px; color: #666; margin-bottom: 6px; }
+        .hist-vacio p { font-size: 14px; }
+
+        /* Modal reseña - mejorado con scroll y espacio para nav */
+        .resena-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: flex-end; }
+        .resena-modal-overlay.visible { display: flex; }
+        .resena-modal { background: white; border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+        .resena-modal::-webkit-scrollbar { width: 4px; }
+        .resena-modal::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .resena-modal-close { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .resena-modal-close h3 { font-size: 18px; font-weight: 800; color: #2c3e50; }
+        .resena-modal-close button { background: none; border: none; font-size: 22px; cursor: pointer; color: #999; }
+
+        .resena-categoria { margin-bottom: 16px; }
+        .resena-cat-label { font-size: 13px; font-weight: 700; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .resena-cat-label svg { width: 16px; height: 16px; }
+        .resena-stars { display: flex; gap: 4px; flex-direction: row-reverse; justify-content: flex-end; }
+        .resena-stars input { display: none; }
+        .resena-stars label { font-size: 28px; color: #ddd; cursor: pointer; transition: color 0.15s; }
+        .resena-stars label:hover, .resena-stars label:hover ~ label, .resena-stars input:checked ~ label { color: #FB8C00; }
+
+        .resena-textarea { width: 100%; border: 2px solid #eee; border-radius: 12px; padding: 12px; font-size: 14px; font-family: 'Nunito', sans-serif; resize: vertical; min-height: 80px; outline: none; transition: border 0.2s; }
+        .resena-textarea:focus { border-color: #FB8C00; }
+        .resena-optional { font-size: 11px; color: #bbb; margin-top: 4px; }
+        .resena-btn-enviar { width: 100%; padding: 14px; background: #FB8C00; color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 14px; font-family: 'Nunito', sans-serif; }
+        .resena-btn-enviar:hover { background: #e67e00; }
+        .resena-btn-enviar:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body class="has-bottom-nav">
+
+    <!-- HEADER -->
+    <div class="home-header">
+        <div class="home-header-top">
+            <a href="/" class="home-logo" style="text-decoration:none;color:white;">
+                Nort<span>Food</span>
+            </a>
+        </div>
+        <div class="home-greeting">
+            <h2>Mis Pedidos</h2>
+            <p>Historial de tus pedidos</p>
+        </div>
+    </div>
+
+    <div class="hist-page">
+
+        {% if negocios_pedidos %}
+            {% for n_id, data in negocios_pedidos.items() %}
+            <div class="hist-negocio">
+                <div class="hist-negocio-header" onclick="toggleNegocio('{{ n_id }}')">
+                    <div class="hist-negocio-logo">
+                        {% if data.logo_url %}
+                        <img src="{{ data.logo_url }}" alt="{{ data.negocio_nombre }}" loading="lazy">
+                        {% else %}
+                        🏪
+                        {% endif %}
+                    </div>
+                    <div class="hist-negocio-info">
+                        <div class="hist-negocio-nombre">{{ data.negocio_nombre }}</div>
+                        <div class="hist-negocio-count">{{ data.pedidos|length }} pedido{{ 's' if data.pedidos|length != 1 }}</div>
+                    </div>
+                    <span class="hist-negocio-arrow" id="arrow-{{ n_id }}">▼</span>
+                </div>
+                <div class="hist-pedidos-list" id="pedidos-{{ n_id }}">
+                    {% for pedido in data.pedidos %}
+                    <div class="hist-pedido">
+                        <div class="hist-pedido-top">
+                            <span class="hist-pedido-fecha">{% if pedido.fecha %}{{ pedido.fecha.strftime('%d/%m/%Y %H:%M') }}{% else %}Sin fecha{% endif %}</span>
+                            <span class="hist-pedido-estado {{ pedido.estado }}">{% if pedido.estado == 'en_camino' %}En camino{% elif pedido.estado == 'listo_para_retirar' %}Listo{% elif pedido.estado == 'recibido' %}Recibido{% elif pedido.estado == 'preparando' %}Preparando{% elif pedido.estado == 'entregado' %}Entregado{% elif pedido.estado == 'cancelado' %}Cancelado{% else %}{{ pedido.estado }}{% endif %}</span>
+                        </div>
+                        <div class="hist-pedido-items">
+                            {% for item in pedido['items'] %}
+                            {{ item.cantidad }}x {{ item.nombre }}<span> · ${{ "%.2f" | format(item.precio * item.cantidad) }}</span>{% if not loop.last %}<br>{% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="hist-pedido-total">${{ "%.2f" | format(pedido.total) }}</div>
+                        <div class="hist-pedido-metodo">{{ '🏍️ Delivery' if pedido.metodo_entrega == 'domicilio' else '🏪 Retiro' }} · {{ '💵 Efectivo' if pedido.metodo_pago == 'efectivo' else '📱 Transferencia' }}</div>
+
+                        {% if pedido.estado == 'cancelado' and pedido.cancelado_motivo %}
+                        <div class="hist-pedido-cancel-info">
+                            <strong>Cancelado{% if pedido.cancelado_por %} por {{ 'el local' if pedido.cancelado_por == 'vendedor' else 'vos' }}{% endif %}:</strong><br>
+                            {{ pedido.cancelado_motivo }}
+                        </div>
+                        {% endif %}
+
+                        <div class="hist-pedido-acciones">
+                            {% if pedido.estado == 'entregado' and not pedido.ya_reseno %}
+                            <button class="hist-btn hist-btn-resena" onclick="abrirModalResena('{{ pedido.negocio_id }}', '{{ pedido._id }}', '{{ data.negocio_nombre }}')">⭐ Dejar reseña</button>
+                            {% elif pedido.estado == 'entregado' and pedido.ya_reseno %}
+                            <span class="hist-btn hist-btn-ya-reseno">✅ Ya reseñado</span>
+                            {% endif %}
+                            {% if data.negocio_slug %}
+                            <button class="hist-btn hist-btn-repetir" onclick="repetirPedido('{{ pedido._id }}')">🔄 Repetir</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="hist-vacio">
+                <div class="hist-vacio-icon">🛒</div>
+                <h3>Aún no hiciste pedidos</h3>
+                <p>Cuando realices tu primer pedido, aparecerá aquí.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- MODAL RESEÑA -->
+    <div class="resena-modal-overlay" id="modal-resena-overlay" onclick="if(event.target===this)cerrarModalResena()">
+        <div class="resena-modal">
+            <div class="resena-modal-close">
+                <h3>Dejar reseña</h3>
+                <button onclick="cerrarModalResena()">&times;</button>
+            </div>
+
+            <div id="resena-negocio-nombre" style="font-size:14px;color:#888;margin-bottom:16px;"></div>
+
+            <!-- Rapidez del delivery -->
+            <div class="resena-categoria">
+                <div class="resena-cat-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FB8C00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    Rapidez del delivery
+                </div>
+                <div class="resena-stars">
+                    <input type="radio" id="rap5" name="rapidez" value="5"><label for="rap5">★</label>
+                    <input type="radio" id="rap4" name="rapidez" value="4"><label for="rap4">★</label>
+                    <input type="radio" id="rap3" name="rapidez" value="3"><label for="rap3">★</label>
+                    <input type="radio" id="rap2" name="rapidez" value="2"><label for="rap2">★</label>
+                    <input type="radio" id="rap1" name="rapidez" value="1" checked><label for="rap1">★</label>
+                </div>
+            </div>
+
+            <!-- Calidad de la comida -->
+            <div class="resena-categoria">
+                <div class="resena-cat-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FB8C00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                    Calidad de la comida
+                </div>
+                <div class="resena-stars">
+                    <input type="radio" id="cal5" name="calidad" value="5"><label for="cal5">★</label>
+                    <input type="radio" id="cal4" name="calidad" value="4"><label for="cal4">★</label>
+                    <input type="radio" id="cal3" name="calidad" value="3"><label for="cal3">★</label>
+                    <input type="radio" id="cal2" name="calidad" value="2"><label for="cal2">★</label>
+                    <input type="radio" id="cal1" name="calidad" value="1" checked><label for="cal1">★</label>
+                </div>
+            </div>
+
+            <!-- Calidad-precio -->
+            <div class="resena-categoria">
+                <div class="resena-cat-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FB8C00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Relación calidad-precio
+                </div>
+                <div class="resena-stars">
+                    <input type="radio" id="pre5" name="precio" value="5"><label for="pre5">★</label>
+                    <input type="radio" id="pre4" name="precio" value="4"><label for="pre4">★</label>
+                    <input type="radio" id="pre3" name="precio" value="3"><label for="pre3">★</label>
+                    <input type="radio" id="pre2" name="precio" value="2"><label for="pre2">★</label>
+                    <input type="radio" id="pre1" name="precio" value="1" checked><label for="pre1">★</label>
+                </div>
+            </div>
+
+            <div style="margin-top:4px;">
+                <label style="font-size:13px;font-weight:700;color:#555;display:block;margin-bottom:6px;">Tu comentario <span style="font-weight:400;color:#bbb;">(opcional)</span></label>
+                <textarea id="resena-comentario" class="resena-textarea" placeholder="Contá cómo fue tu experiencia..." rows="3"></textarea>
+            </div>
+
+            <button id="resena-btn-enviar" class="resena-btn-enviar" onclick="enviarResena()">Enviar reseña</button>
+        </div>
+    </div>
+
+    <script>
+    let resenaNegocioId = '';
+    let resenaPedidoId = '';
+
+    function toggleNegocio(nId) {
+        const lista = document.getElementById('pedidos-' + nId);
+        const arrow = document.getElementById('arrow-' + nId);
+        if (lista.classList.contains('visible')) {
+            lista.classList.remove('visible');
+            arrow.classList.remove('abierto');
+        } else {
+            lista.classList.add('visible');
+            arrow.classList.add('abierto');
+        }
+    }
+
+    // --- RESEÑA ---
+    function abrirModalResena(negocioId, pedidoId, negocioNombre) {
+        resenaNegocioId = negocioId;
+        resenaPedidoId = pedidoId;
+        document.getElementById('resena-negocio-nombre').textContent = negocioNombre;
+        document.querySelectorAll('.resena-stars input[value="1"]').forEach(i => i.checked = true);
+        document.getElementById('resena-comentario').value = '';
+        document.getElementById('modal-resena-overlay').classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModalResena() {
+        document.getElementById('modal-resena-overlay').classList.remove('visible');
+        document.body.style.overflow = '';
+    }
+
+    async function enviarResena() {
+        const rapidez = document.querySelector('input[name="rapidez"]:checked');
+        const calidad = document.querySelector('input[name="calidad"]:checked');
+        const precio = document.querySelector('input[name="precio"]:checked');
+        const comentario = document.getElementById('resena-comentario').value.trim();
+
+        if (!rapidez || !calidad || !precio) {
+            NortUI.toast('Poné estrellas en las 3 categorías', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('resena-btn-enviar');
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+
+        try {
+            const res = await fetch(`/api/resenas/${resenaNegocioId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    rapidez: parseInt(rapidez.value),
+                    calidad: parseInt(calidad.value),
+                    precio: parseInt(precio.value),
+                    comentario: comentario,
+                    pedido_id: resenaPedidoId
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                NortUI.toast('¡Reseña enviada!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                NortUI.toast(data.error || 'Error al enviar', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Enviar reseña';
+            }
+        } catch(e) {
+            NortUI.toast('Error de conexión', 'error');
+            btn.disabled = false;
+            btn.textContent = 'Enviar reseña';
+        }
+    }
+
+    // NOTA: repetirPedido() se carga desde nortfood-ui.js (global)
+    </script>
+
+    {% include 'nav_cliente.html' %}
+</body>
+</html>
