@@ -1,0 +1,496 @@
+// DeliGO - Prisma Schema (SQLite)
+// Migrated from MongoDB plataforma_pedidos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CLIENTES
+// ============================================
+model Cliente {
+  id             String    @id @default(cuid())
+  nombre         String
+  email          String    @unique
+  password       String?
+  googleId       String?   @unique
+  telefono       String    @default("")
+  pushSubscription String?
+  fechaRegistro  DateTime  @default(now())
+
+  direcciones    Direccion[]
+  favoritos      Favorito[]
+  pedidos        Pedido[]
+  resenas        Resena[]
+  chatMensajes   ChatMensaje[]
+
+  @@map("clientes")
+}
+
+model Direccion {
+  id          String  @id @default(cuid())
+  alias       String
+  direccion   String
+  referencia  String  @default("")
+  lat         Float?
+  lng         Float?
+  clienteId   String
+  cliente     Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@map("direcciones")
+}
+
+model Favorito {
+  id         String  @id @default(cuid())
+  clienteId  String
+  negocioId  String
+  cliente    Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  negocio    Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, negocioId])
+  @@map("favoritos")
+}
+
+// ============================================
+// NEGOCIOS
+// ============================================
+model Negocio {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  nombre              String
+  usuario             String   @unique
+  password            String
+  rubro               String   @default("restaurante") // restaurante, ropa, otro
+  aprobado            Boolean  @default(false)
+  suspendido          Boolean  @default(false)
+
+  // Personalización visual
+  colorPrincipal      String   @default("#FB8C00")
+  mensajeBienvenida   String   @default("")
+  logoEnCirculo       Boolean  @default(false)
+  colorCirculoLogo    String   @default("")
+  colorFondo          String   @default("")
+
+  // Categorías de productos
+  categorias          String   @default("[]") // JSON array of strings
+
+  // Categorías de agregados e ingredientes
+  agregadosCategorias String   @default("[]") // JSON array of strings
+  ingredientesCategorias String @default("[]") // JSON array of strings
+
+  // Secciones del catálogo
+  seccionesCatalogo   String   @default("[]") // JSON array of section objects
+
+  // Horarios (JSON: keys "1"-"7" with apertura/cierre/turno2 etc.)
+  horarios            String   @default("{}")
+
+  // Redes sociales
+  whatsapp            String   @default("")
+  instagram           String   @default("")
+  facebook            String   @default("")
+
+  // Imágenes
+  logoUrl             String?
+  bannerUrl           String?
+  fondoImagenUrl      String?
+
+  // Delivery
+  ofreceDelivery      Boolean  @default(false)
+  zonaDeliveryActiva  Boolean  @default(false)
+  zonasDelivery       String   @default("[]") // JSON array of zone objects
+  precioDelivery      Float    @default(0)
+  precioDeliveryDefault Float  @default(0)
+
+  // Pago
+  aceptaTransferencia Boolean  @default(false)
+  aliasBancario       String   @default("")
+
+  // Configuración de pedidos
+  toleranciaCancelacion Int    @default(5) // minutes
+  tiempoEntrega        Int     @default(30) // minutes
+
+  // Repartidores
+  repartidorCodigo    String?  @unique
+
+  // Plan
+  planTipo            String   @default("prueba")
+  planVencimiento     String?
+  planFechaInicio     String?
+  planFechaRenovacion String?
+
+  // Push
+  pushSubscription    String?
+
+  // Monetización
+  deudaTarifa         Float    @default(0)
+  limiteDeuda         Float?
+
+  // Rating cache
+  puntuacionPromedio  Float    @default(0)
+  totalResenas        Int      @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  productos           Producto[]
+  agregados           Agregado[]
+  ingredientes        Ingrediente[]
+  pedidos             Pedido[]
+  resenas             Resena[]
+  favoritos           Favorito[]
+  deudaHistorial      DeudaHistorial[]
+  repartidores        RepartidorNegocio[]
+  secciones           SeccionCatalogo[]
+
+  @@map("negocios")
+}
+
+// ============================================
+// SECCIONES CATÁLOGO
+// ============================================
+model SeccionCatalogo {
+  id          String  @id @default(cuid())
+  nombre      String
+  orientacion String  @default("vertical") // horizontal, vertical
+  orden       Int     @default(0)
+  color       String  @default("")
+  negocioId   String
+  negocio     Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  productos   SeccionProducto[]
+
+  @@map("secciones_catalogo")
+}
+
+model SeccionProducto {
+  id         String  @id @default(cuid())
+  seccionId  String
+  productoId String
+  seccion    SeccionCatalogo @relation(fields: [seccionId], references: [id], onDelete: Cascade)
+  producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  orden      Int     @default(0)
+
+  @@unique([seccionId, productoId])
+  @@map("seccion_productos")
+}
+
+// ============================================
+// PRODUCTOS
+// ============================================
+model Producto {
+  id              String   @id @default(cuid())
+  nombre          String
+  precio          Float
+  categoria       String   @default("Sin Categoria")
+  imagenUrl       String?
+  imagenesExtra   String   @default("[]") // JSON array of URLs
+  negocioId       String
+  stock           Boolean  @default(true)
+
+  // Descuentos
+  descuentoActivo Boolean  @default(false)
+  tipoDescuento   String   @default("porcentaje") // porcentaje, monto
+  valorDescuento  Float    @default(0)
+
+  // Restaurante
+  descripcion     String?
+  secciones       String   @default("[]") // JSON: product option sections
+  recomendados    String   @default("[]") // JSON array of product IDs
+
+  // Ropa
+  talles          String   @default("[]") // JSON array
+  colores         String   @default("[]") // JSON array
+  material        String   @default("")
+  genero          String   @default("")
+
+  orden           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  negocio         Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  agregados       ProductoAgregado[]
+  ingredientes    ProductoIngrediente[]
+  seccionItems    SeccionProducto[]
+  itemsPedido     PedidoItem[]
+
+  @@map("productos")
+}
+
+model ProductoAgregado {
+  id         String   @id @default(cuid())
+  productoId String
+  agregadoId String
+  producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  agregado   Agregado @relation(fields: [agregadoId], references: [id], onDelete: Cascade)
+
+  @@unique([productoId, agregadoId])
+  @@map("producto_agregados")
+}
+
+model ProductoIngrediente {
+  id            String     @id @default(cuid())
+  productoId    String
+  ingredienteId String
+  producto      Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id], onDelete: Cascade)
+
+  @@unique([productoId, ingredienteId])
+  @@map("producto_ingredientes")
+}
+
+// ============================================
+// AGREGADOS (Add-ons)
+// ============================================
+model Agregado {
+  id        String   @id @default(cuid())
+  nombre    String
+  precio    Float    @default(0)
+  categoria String   @default("")
+  imagenUrl String?
+  negocioId String
+  negocio   Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  productos ProductoAgregado[]
+
+  @@map("agregados")
+}
+
+// ============================================
+// INGREDIENTES
+// ============================================
+model Ingrediente {
+  id        String   @id @default(cuid())
+  nombre    String
+  categoria String   @default("")
+  imagenUrl String?
+  negocioId String
+  negocio   Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  productos ProductoIngrediente[]
+
+  @@map("ingredientes")
+}
+
+// ============================================
+// PEDIDOS (Orders)
+// ============================================
+model Pedido {
+  id                    String   @id @default(cuid())
+  negocioId             String
+  negocioSlug           String
+  negocioNombre         String
+  clienteId             String?
+  clienteNombre         String
+  clienteTelefono       String   @default("")
+
+  // Totales
+  total                 Float
+  totalProductos        Float
+  tarifaServicio        Float    @default(0)
+  precioDelivery        Float    @default(0)
+
+  // Entrega
+  metodoEntrega         String   @default("retiro") // retiro, domicilio
+  direccion             String?
+  referencia            String?
+  lat                   Float?
+  lng                   Float?
+
+  // Pago
+  metodoPago            String   @default("efectivo") // efectivo, transferencia
+  notas                 String?
+
+  // Estado
+  estado                String   @default("recibido") // recibido, preparando, en_camino, listo_para_retirar, entregado, cancelado
+  deudaAcumulada        Boolean  @default(false)
+  canceladoPor          String?  // cliente, vendedor
+  canceladoMotivo       String?
+  canceladoFecha        DateTime?
+  clienteConfirmaRecibido Boolean @default(false)
+  clienteConfirmaFecha  DateTime?
+  entregadoPorRepartidor Boolean @default(false)
+  entregadoFecha        DateTime?
+
+  fecha                 DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  negocio               Negocio     @relation(fields: [negocioId], references: [id])
+  cliente               Cliente?    @relation(fields: [clienteId], references: [id])
+  items                 PedidoItem[]
+  mensajes              ChatMensaje[]
+  resena                Resena?
+
+  @@map("pedidos")
+}
+
+model PedidoItem {
+  id                    String  @id @default(cuid())
+  pedidoId              String
+  productoId            String?
+  nombre                String
+  precio                Float
+  cantidad              Int     @default(1)
+  agregados             String  @default("[]") // JSON: [{id, nombre, precio}]
+  secciones             String  @default("{}") // JSON: {sectionName: option}
+  seccionesPrecios      String  @default("{}") // JSON: {key: price}
+  ingredientes          String  @default("[]") // JSON
+  ingredientesQuitados  String  @default("[]") // JSON
+  talle                 String  @default("")
+  color                 String  @default("")
+
+  pedido                Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto              Producto? @relation(fields: [productoId], references: [id])
+
+  @@map("pedido_items")
+}
+
+// ============================================
+// CHAT
+// ============================================
+model ChatMensaje {
+  id          String   @id @default(cuid())
+  pedidoId    String
+  remitente   String   // cliente, vendedor, repartidor
+  texto       String   @default("")
+  imagenUrl   String?
+  archivoUrl  String?
+  archivoNombre String?
+  archivoTipo String?
+  leido       Boolean  @default(false)
+  fecha       DateTime @default(now())
+
+  pedido      Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  cliente     Cliente? @relation(fields: [clienteId], references: [id])
+  clienteId   String?
+
+  @@map("chat_mensajes")
+}
+
+// ============================================
+// RESEÑAS
+// ============================================
+model Resena {
+  id              String    @id @default(cuid())
+  negocioId       String
+  clienteId       String
+  clienteNombre   String
+  pedidoId        String    @unique
+  puntuacion      Int       // 1-5
+  comentario      String    @default("")
+  rapidez         Int?
+  calidad         Int?
+  precio          Int?
+  respuestaNegocio String?
+  fechaRespuesta   DateTime?
+  fecha           DateTime  @default(now())
+
+  negocio         Negocio   @relation(fields: [negocioId], references: [id])
+  cliente         Cliente   @relation(fields: [clienteId], references: [id])
+  pedido          Pedido    @relation(fields: [pedidoId], references: [id])
+
+  @@map("resenas")
+}
+
+// ============================================
+// REPARTIDORES
+// ============================================
+model Repartidor {
+  id               String   @id @default(cuid())
+  nombre           String
+  email            String   @unique
+  password         String
+  telefono         String   @default("")
+  pushSubscription String?
+  activo           Boolean  @default(true)
+  fechaRegistro    DateTime @default(now())
+
+  negocios         RepartidorNegocio[]
+
+  @@map("repartidores")
+}
+
+model RepartidorNegocio {
+  id              String     @id @default(cuid())
+  repartidorId    String
+  negocioId       String
+  negocioSlug     String
+  negocioNombre   String
+  negocioLogoUrl  String?
+  codigoAcceso    String
+  fechaAsociacion DateTime   @default(now())
+
+  repartidor      Repartidor @relation(fields: [repartidorId], references: [id], onDelete: Cascade)
+  negocio         Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@unique([repartidorId, negocioId])
+  @@map("repartidor_negocios")
+}
+
+// ============================================
+// SUPERADMIN
+// ============================================
+model SuperAdmin {
+  id         String @id @default(cuid())
+  password   String
+  createdAt  DateTime @default(now())
+
+  @@map("super_admins")
+}
+
+// ============================================
+// DEUDA HISTORIAL
+// ============================================
+model DeudaHistorial {
+  id             String   @id @default(cuid())
+  negocioId      String
+  negocioNombre  String
+  montoAbonado   Float
+  deudaAnterior  Float
+  fechaAbono     DateTime @default(now())
+  tipo           String   @default("abono_total")
+
+  negocio        Negocio  @relation(fields: [negocioId], references: [id])
+
+  @@map("deuda_historial")
+}
+
+// ============================================
+// SESIONES
+// ============================================
+model Sesion {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  userId      String
+  userType    String   // cliente, negocio, repartidor, superadmin
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@map("sesiones")
+}
+
+// ============================================
+// PROMOCIONES (cached view of discounted products)
+// ============================================
+model Promocion {
+  id          String   @id @default(cuid())
+  productoId  String   @unique
+  negocioId   String
+  negocioSlug String
+  negocioNombre String
+  precioOriginal Float
+  precioPromo Float
+  descuento   String  // e.g. "20%" or "$500"
+  fechaInicio DateTime @default(now())
+  fechaFin    DateTime?
+  activa      Boolean  @default(true)
+
+  @@map("promociones")
+}
